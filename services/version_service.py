@@ -102,11 +102,28 @@ def compare_versions(ci_id, v1_number, v2_number):
         'raw_diff': "".join(raw_diff) if raw_diff else "Identical content."
     }
 
+def _resolve_git_cmd():
+    import shutil
+    import os
+    found = shutil.which('git')
+    if found:
+        return found
+    candidates = [
+        os.path.expanduser(r"~\AppData\Local\Programs\Git\cmd\git.exe"),
+        r"C:\Program Files\Git\cmd\git.exe",
+        r"C:\Program Files (x86)\Git\cmd\git.exe"
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    return 'git'
+
 def check_local_git_status():
     """Safely check if Git is installed and check local repo commits."""
+    git_bin = _resolve_git_cmd()
     try:
         git_version_out = subprocess.run(
-            ['git', '--version'], 
+            [git_bin, '--version'], 
             capture_output=True, 
             text=True, 
             timeout=3
@@ -121,7 +138,7 @@ def check_local_git_status():
 
         # Check commit history in current workspace
         git_log = subprocess.run(
-            ['git', 'log', '-n', '10', '--pretty=format:%h|%an|%ad|%s', '--date=short'],
+            [git_bin, 'log', '-n', '10', '--pretty=format:%h|%an|%ad|%s', '--date=short'],
             capture_output=True,
             text=True,
             timeout=5

@@ -1,0 +1,16 @@
+{
+  "ci_id": "CI-006",
+  "name": "Trust Evaluation Configuration",
+  "version": "1.0",
+  "trust_threshold": 70,
+  "confidence_min_samples": 2,
+  "penalty_risk_high": 14,
+  "enable_memory_retrieval": true,
+  "scoring_weights": {
+    "category_base": 20.0,
+    "memory_outcome": 45.0,
+    "risk_penalty": 15.0,
+    "author_experience": 10.0,
+    "verification_readiness": 10.0
+  }
+}

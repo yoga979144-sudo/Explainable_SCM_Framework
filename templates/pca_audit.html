@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Physical Configuration Audit (PCA){% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Physical Configuration Audit (PCA)</h3>
+        <p class="text-secondary small m-0">Verifies that the physical software artifacts, build wheels, schemas, and configurations accurately match the design documents and baseline specifications.</p>
+    </div>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#newPcaCollapse">
+        <i class="fa-solid fa-microchip me-1"></i> Conduct New PCA Audit
+    </button>
+</div>
+
+<!-- Conduct New PCA Collapse Form -->
+<div class="collapse mb-4" id="newPcaCollapse">
+    <div class="card border-primary">
+        <div class="card-header bg-primary bg-opacity-10">
+            <span class="fw-bold text-primary"><i class="fa-solid fa-microchip me-2"></i> Conduct Formal PCA Checklist Evaluation</span>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('audit.submit_pca') }}">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Audit Title *</label>
+                        <input type="text" name="title" class="form-control form-control-sm" placeholder="e.g. PCA Audit on Release Bundle v2.0.0" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Target Release / Bundle *</label>
+                        <input type="text" name="target" class="form-control form-control-sm" placeholder="e.g. Release REL-002 or Bundle Archive" required>
+                    </div>
+                </div>
+
+                <h6 class="small fw-bold text-uppercase text-muted mb-2">Formal PCA Checklist Items</h6>
+                <div class="table-responsive border rounded mb-3">
+                    <table class="table table-sm table-hover mb-0" style="font-size: 0.85rem;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th style="width: 40px;">#</th>
+                                <th style="width: 35%;">Physical Audit Verification Question</th>
+                                <th style="width: 15%;">Evaluation</th>
+                                <th style="width: 25%;">Auditor Remarks</th>
+                                <th style="width: 20%;">Artifact Evidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in checklist %}
+                            <tr>
+                                <td><strong>{{ item.item }}</strong></td>
+                                <td>
+                                    {{ item.question }}
+                                    {% if item.critical %}
+                                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Critical Gate</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <select name="response_{{ item.item }}" class="form-select form-select-sm">
+                                        <option value="Yes" selected>Yes (Satisfied)</option>
+                                        <option value="No">No (Unsatisfied)</option>
+                                        <option value="N/A">Not Applicable</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" name="remarks_{{ item.item }}" class="form-control form-control-sm" placeholder="Auditor observation...">
+                                </td>
+                                <td>
+                                    <input type="text" name="evidence_{{ item.item }}" class="form-control form-control-sm" placeholder="e.g. File checksum / hash">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Auditor Physical Synthesis & Notes</label>
+                    <textarea name="summary_notes" rows="2" class="form-control form-control-sm" placeholder="Physical artifact verification notes, checksum verification, and release packaging certification..."></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#newPcaCollapse">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fa-solid fa-stamp me-1"></i> Calculate & Submit PCA Audit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Past PCA Sessions Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Historical PCA Sessions</span>
+        <span class="badge bg-light text-secondary border">{{ audits | length }} Audits Recorded</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>Audit ID</th>
+                    <th>Title</th>
+                    <th>Target Scope</th>
+                    <th>Lead Auditor</th>
+                    <th>Audit Date</th>
+                    <th>Computed Outcome</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in audits %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('audit.audit_detail', audit_id=a.audit_id) }}" class="fw-bold text-decoration-none">
+                            {{ a.audit_id }}
+                        </a>
+                    </td>
+                    <td><span class="fw-medium text-dark">{{ a.title }}</span></td>
+                    <td><span class="badge bg-light text-dark border">{{ a.target_baseline_or_ci }}</span></td>
+                    <td><small class="text-muted"><i class="fa-solid fa-user me-1"></i>{{ a.auditor }}</small></td>
+                    <td><small class="text-muted">{{ a.audit_date.strftime('%Y-%m-%d') }}</small></td>
+                    <td><span class="badge {{ a.overall_status | status_badge }} fs-6">{{ a.overall_status }}</span></td>
+                    <td>
+                        <a href="{{ url_for('audit.audit_detail', audit_id=a.audit_id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-eye me-1"></i> Inspect Checklist
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No PCA audit sessions recorded.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

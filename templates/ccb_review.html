@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Change Control Board (CCB) Review Queue{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Change Control Board (CCB) Review Queue</h3>
+        <p class="text-secondary small m-0">Formal governance authority for evaluating, approving, modifying, or rejecting proposed configuration modifications.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+            <i class="fa-solid fa-hourglass-half me-1"></i> {{ pending_crs | length }} Pending Board Decisions
+        </span>
+    </div>
+</div>
+
+<!-- Pending CCB Decision Queue -->
+<div class="card mb-4 border-warning">
+    <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-dark"><i class="fa-solid fa-gavel me-2 text-warning"></i> Active Changes Requiring CCB Ruling</span>
+        <span class="badge bg-light text-dark border">Decision Gate Required</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-custom table-hover">
+                <thead>
+                    <tr>
+                        <th>CR ID</th>
+                        <th>Change Proposal</th>
+                        <th>Target CI</th>
+                        <th>Risk / Impact</th>
+                        <th>Trust Score</th>
+                        <th>Recommendation</th>
+                        <th>Action Ruling</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cr in pending_crs %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('change.cr_detail', cr_id=cr.cr_id) }}" class="fw-bold text-decoration-none">
+                                {{ cr.cr_id }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark">{{ cr.title }}</div>
+                            <small class="text-muted d-block text-truncate" style="max-width: 250px;">{{ cr.reason_for_change }}</small>
+                            <small class="text-secondary">By: <strong>{{ cr.requester }}</strong></small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ cr.affected_ci_id }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if cr.risk_level == 'Critical' %}bg-danger{% elif cr.risk_level == 'High' %}bg-warning text-dark{% else %}bg-light text-dark border{% endif %}">
+                                {{ cr.risk_level }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if cr.trust_score %}
+                            <span class="badge {{ cr.trust_score | trust_badge }} fs-6">
+                                {{ cr.trust_score }}/100
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">Evaluating</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="fw-semibold text-dark">{{ cr.recommendation or 'Evaluating...' }}</small>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('change.cr_detail', cr_id=cr.cr_id) }}" class="btn btn-sm btn-primary" title="Review and Decide">
+                                    <i class="fa-solid fa-stamp me-1"></i> Review & Decide
+                                </a>
+                                <a href="{{ url_for('trust.explainability_view', cr_id=cr.cr_id) }}" class="btn btn-sm btn-outline-success" title="Explain Score">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <i class="fa-solid fa-circle-check fs-3 d-block mb-2 text-success"></i>
+                            All submitted change requests have been reviewed! No items pending in CCB queue.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Recently Adjudicated Changes -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i> Recently Decided Changes</span>
+        <span class="badge bg-light text-secondary border">Audit History</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>CR ID</th>
+                    <th>Title</th>
+                    <th>Target CI</th>
+                    <th>Final Ruling</th>
+                    <th>Reviewer Comments</th>
+                    <th>Current Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recent_reviewed %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('change.cr_detail', cr_id=r.cr_id) }}" class="fw-bold text-decoration-none">
+                            {{ r.cr_id }}
+                        </a>
+                    </td>
+                    <td>{{ r.title }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ r.affected_ci_id }}</span></td>
+                    <td>
+                        <span class="badge {% if r.final_decision == 'Approved' %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                            {{ r.final_decision }}
+                        </span>
+                    </td>
+                    <td><small class="text-secondary">{{ r.reviewer_comments or 'N/A' }}</small></td>
+                    <td><span class="badge {{ r.current_status | status_badge }}">{{ r.current_status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

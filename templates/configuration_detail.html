@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ci.ci_id }} - {{ ci.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('configuration.index') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary">{{ ci.ci_id }}</span>
+                <h3 class="fw-bold m-0 text-dark">{{ ci.name }}</h3>
+            </div>
+            <p class="text-secondary small m-0">{{ ci.category }} &bull; Current Version: <strong>v{{ ci.current_version }}</strong></p>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('change.new_cr') }}?affected_ci_id={{ ci.ci_id }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-code-pull-request me-1"></i> Propose Change for {{ ci.ci_id }}
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Left Column: Metadata & Edit Form -->
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-circle-info me-2 text-primary"></i> CI Metadata & Status</span>
+                <span class="badge {{ ci.status | status_badge }}">{{ ci.status }}</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('configuration.edit_ci', ci_id=ci.ci_id) }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Item Name</label>
+                        <input type="text" name="name" class="form-control form-control-sm" value="{{ ci.name }}" required>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Category</label>
+                            <select name="category" class="form-select form-select-sm">
+                                {% for cat in categories %}
+                                <option value="{{ cat }}" {% if ci.category == cat %}selected{% endif %}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Owner</label>
+                            <input type="text" name="owner" class="form-control form-control-sm" value="{{ ci.owner }}" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Lifecycle Status</label>
+                            <select name="status" class="form-select form-select-sm">
+                                {% for st in statuses %}
+                                <option value="{{ st }}" {% if ci.status == st %}selected{% endif %}>{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Approval Status</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="{{ ci.approval_status }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Baseline Status</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="{{ ci.baseline_status }}" readonly>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Release Status</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="{{ ci.release_status }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Description</label>
+                        <textarea name="description" rows="3" class="form-control form-control-sm">{{ ci.description }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-check me-1"></i> Update Metadata
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Traceability Dependency Card -->
+        <div class="card">
+            <div class="card-header">
+                <span><i class="fa-solid fa-link me-2 text-info"></i> Establish Traceability Link</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('configuration.add_ci_dependency', ci_id=ci.ci_id) }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Target Configuration Item</label>
+                        <select name="target_ci_id" class="form-select form-select-sm" required>
+                            <option value="">-- Select Target CI --</option>
+                            {% for other in all_other_cis %}
+                            <option value="{{ other.ci_id }}">{{ other.ci_id }}: {{ other.name }} ({{ other.category }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Relationship Type</label>
+                        <select name="dependency_type" class="form-select form-select-sm">
+                            <option value="Depends On">Depends On</option>
+                            <option value="Implements">Implements (e.g. Code &rarr; Requirements)</option>
+                            <option value="Tests">Tests / Verifies (e.g. Test &rarr; Source)</option>
+                            <option value="Configures">Configures (e.g. Config &rarr; System)</option>
+                            <option value="Deploys">Deploys (e.g. Manifest &rarr; Build)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Traceability Justification</label>
+                        <input type="text" name="description" class="form-control form-control-sm" placeholder="e.g. Enforces functional compliance with SRS">
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-plus me-1"></i> Add Link
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Version History & Dependency Map -->
+    <div class="col-lg-7">
+        <!-- Version History Table -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i> Version Evolution History</span>
+                <span class="badge bg-light text-dark border">{{ versions | length }} Versions Recorded</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom table-hover">
+                    <thead>
+                        <tr>
+                            <th>Version</th>
+                            <th>Change Summary</th>
+                            <th>Author</th>
+                            <th>Timestamp</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ver in versions %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-dark">v{{ ver.version_number }}</span>
+                                {% if ver.version_number == ci.current_version %}
+                                <span class="badge bg-success ms-1">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="small fw-medium">{{ ver.change_description }}</div>
+                            </td>
+                            <td><small class="text-muted">{{ ver.author }}</small></td>
+                            <td><small class="text-muted">{{ ver.timestamp.strftime('%Y-%m-%d %H:%M') }}</small></td>
+                            <td><span class="badge {{ ver.approval_status | status_badge }}">{{ ver.approval_status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Traceability Dependencies Matrix -->
+        <div class="card">
+            <div class="card-header">
+                <span><i class="fa-solid fa-diagram-project me-2 text-primary"></i> Traceability Graph Relations</span>
+            </div>
+            <div class="card-body">
+                <h6 class="small fw-bold text-uppercase text-muted mb-2">Outgoing Links ({{ ci.ci_id }} &rarr; Others)</h6>
+                {% if dependencies.outgoing %}
+                <ul class="list-group list-group-flush mb-3">
+                    {% for dep in dependencies.outgoing %}
+                    <li class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-info text-dark me-2">{{ dep.dependency_type }}</span>
+                            <a href="{{ url_for('configuration.ci_detail', ci_id=dep.target_ci_id) }}" class="fw-bold text-decoration-none">
+                                {{ dep.target_ci_id }}
+                            </a>
+                            <small class="text-muted ms-2">{{ dep.description }}</small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted small fst-italic mb-3">No outgoing traceability links defined.</p>
+                {% endif %}
+
+                <h6 class="small fw-bold text-uppercase text-muted mb-2">Incoming Links (Others &rarr; {{ ci.ci_id }})</h6>
+                {% if dependencies.incoming %}
+                <ul class="list-group list-group-flush">
+                    {% for dep in dependencies.incoming %}
+                    <li class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{{ url_for('configuration.ci_detail', ci_id=dep.source_ci_id) }}" class="fw-bold text-decoration-none">
+                                {{ dep.source_ci_id }}
+                            </a>
+                            <span class="badge bg-secondary ms-2 me-2">{{ dep.dependency_type }}</span>
+                            <small class="text-muted">{{ dep.description }}</small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted small fst-italic">No other configuration items currently depend on {{ ci.ci_id }}.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

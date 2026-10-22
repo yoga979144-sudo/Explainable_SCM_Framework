@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Version Difference Comparator{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Version Difference Comparator</h3>
+        <p class="text-secondary small m-0">Inspect configuration payloads, diff tables, and parameter drifts between two revisions.</p>
+    </div>
+    <a href="{{ url_for('scm.version_history') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Version History
+    </a>
+</div>
+
+<!-- Comparison Selector Toolbar -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <span class="fw-bold"><i class="fa-solid fa-sliders me-2 text-primary"></i> Select Configuration Item and Revisions to Diff</span>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('scm.version_compare') }}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Target Configuration Item</label>
+                <select name="ci_id" id="ciSelect" class="form-select form-select-sm" required>
+                    <option value="">-- Choose CI --</option>
+                    {% for ci in cis %}
+                    <option value="{{ ci.ci_id }}" {% if selected_ci == ci.ci_id %}selected{% endif %}>
+                        {{ ci.ci_id }}: {{ ci.name }} (Current: v{{ ci.current_version }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Base Version (v1)</label>
+                <input type="text" name="v1" class="form-control form-control-sm" placeholder="e.g. 1.0" value="{{ v1 or '1.0' }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Comparison Version (v2)</label>
+                <input type="text" name="v2" class="form-control form-control-sm" placeholder="e.g. 2.0" value="{{ v2 or '2.0' }}" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="fa-solid fa-code-compare me-1"></i> Compare Diff
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if diff_result %}
+    {% if diff_result.error %}
+    <div class="alert alert-danger">
+        <i class="fa-solid fa-circle-exclamation me-2"></i> {{ diff_result.error }}
+    </div>
+    {% else %}
+    <!-- Diff Header Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 border-secondary">
+                <div class="card-header bg-light py-2">
+                    <span class="fw-bold text-secondary">Base Version: {{ diff_result.v1.version_id }} (v{{ diff_result.v1.version_number }})</span>
+                </div>
+                <div class="card-body py-2">
+                    <small class="text-muted d-block"><strong>Author:</strong> {{ diff_result.v1.author }}</small>
+                    <small class="text-muted d-block"><strong>Date:</strong> {{ diff_result.v1.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                    <small class="text-muted d-block"><strong>Description:</strong> {{ diff_result.v1.change_description }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 border-primary">
+                <div class="card-header bg-primary bg-opacity-10 py-2">
+                    <span class="fw-bold text-primary">Comparison Version: {{ diff_result.v2.version_id }} (v{{ diff_result.v2.version_number }})</span>
+                </div>
+                <div class="card-body py-2">
+                    <small class="text-muted d-block"><strong>Author:</strong> {{ diff_result.v2.author }}</small>
+                    <small class="text-muted d-block"><strong>Date:</strong> {{ diff_result.v2.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                    <small class="text-muted d-block"><strong>Description:</strong> {{ diff_result.v2.change_description }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side by Side HTML Diff Viewer -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="fa-solid fa-table-columns me-2 text-primary"></i> Structured Visual Comparison</span>
+            <span class="badge bg-light text-muted border">Unified Line Tracker</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive p-3" style="background: #ffffff;">
+                {{ diff_result.html_diff | safe }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Raw Unified Diff Console -->
+    <div class="card">
+        <div class="card-header bg-dark text-white py-2">
+            <span class="small font-monospace"><i class="fa-solid fa-terminal me-2 text-success"></i> Unified Diff Output (diff -u)</span>
+        </div>
+        <div class="card-body p-0">
+            <pre class="diff-container m-0"><code>{{ diff_result.raw_diff }}</code></pre>
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+<div class="card text-center py-5">
+    <div class="card-body text-muted">
+        <i class="fa-solid fa-code-compare fs-1 d-block mb-3 text-secondary"></i>
+        <h5>Select a Configuration Item and two versions above to view diff.</h5>
+        <p class="small">Demonstrates change identification, parameter drift detection, and line-by-line inspection.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

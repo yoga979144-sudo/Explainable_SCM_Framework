@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Software Releases{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Release Management</h3>
+        <p class="text-secondary small m-0">Formal deployment release packaging linking approved baselines, verified change requests, and audit attestations.</p>
+    </div>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#newReleaseCollapse">
+        <i class="fa-solid fa-plus me-1"></i> Cut New Release
+    </button>
+</div>
+
+<!-- Cut New Release Collapse Form -->
+<div class="collapse mb-4" id="newReleaseCollapse">
+    <div class="card border-primary">
+        <div class="card-header bg-primary bg-opacity-10">
+            <span class="fw-bold text-primary"><i class="fa-solid fa-box-archive me-2"></i> Authorize & Package Software Release</span>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('scm.releases') }}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Release Identifier / Name *</label>
+                        <input type="text" name="release_name" class="form-control form-control-sm" placeholder="e.g. Enterprise SCM v2.1.0 GA" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Target Approved Baseline *</label>
+                        <select name="baseline_id" class="form-select form-select-sm" required>
+                            <option value="">-- Choose Baseline --</option>
+                            {% for bl in baselines %}
+                            <option value="{{ bl.baseline_id }}">{{ bl.baseline_id }}: {{ bl.name }} ({{ bl.approval_status }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Included Approved Change Requests (Comma-separated)</label>
+                        <input type="text" name="included_cr_ids" class="form-control form-control-sm" placeholder="e.g. CR-002, CR-003">
+                        <div class="form-text">System strictly rejects unapproved or untested change requests.</div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Release Status</label>
+                        <select name="release_status" class="form-select form-select-sm">
+                            <option value="Planned">Planned</option>
+                            <option value="Released" selected>Released (Active)</option>
+                            <option value="Archived">Archived</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Test Verification Status</label>
+                        <select name="test_status" class="form-select form-select-sm">
+                            <option value="Passed" selected>Passed</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#newReleaseCollapse">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-rocket me-1"></i> Authorize & Publish Release
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Releases Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Formal Release Register</span>
+        <span class="badge bg-light text-secondary border">{{ releases | length }} Releases Tracked</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>Release ID</th>
+                    <th>Release Name</th>
+                    <th>Associated Baseline</th>
+                    <th>Included Change Requests</th>
+                    <th>Test Verification</th>
+                    <th>Release Status</th>
+                    <th>Release Date</th>
+                    <th>Responsible Lead</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in releases %}
+                <tr>
+                    <td><span class="badge bg-purple font-monospace">{{ r.release_id }}</span></td>
+                    <td><span class="fw-bold text-dark">{{ r.release_name }}</span></td>
+                    <td>
+                        <span class="badge bg-light text-dark border"><i class="fa-solid fa-layer-group me-1 text-primary"></i>{{ r.baseline_id }}</span>
+                    </td>
+                    <td>
+                        <span class="small font-monospace text-secondary">{{ r.included_changes or 'None' }}</span>
+                    </td>
+                    <td><span class="badge {{ r.test_status | status_badge }}">{{ r.test_status }}</span></td>
+                    <td><span class="badge {{ r.release_status | status_badge }}">{{ r.release_status }}</span></td>
+                    <td><small class="text-muted">{{ r.release_date.strftime('%Y-%m-%d') }}</small></td>
+                    <td><small class="text-muted"><i class="fa-solid fa-user me-1"></i>{{ r.responsible_user }}</small></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">No releases created yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

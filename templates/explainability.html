@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Explainability Diagnostic - {{ current_cr_id }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Explainable AI & Trust Diagnostic Panel</h3>
+        <p class="text-secondary small m-0">Transparent decomposition of factors, empirical precedent citations, and actionable recommendations.</p>
+    </div>
+    
+    <!-- Select CR Dropdown -->
+    <div class="d-flex align-items-center gap-2">
+        <label class="small fw-semibold text-muted text-nowrap">Select Change Request:</label>
+        <select class="form-select form-select-sm" onchange="window.location.href='{{ url_for('trust.explainability_view') }}/' + this.value" style="min-width: 220px;">
+            {% for c in all_crs %}
+            <option value="{{ c.cr_id }}" {% if c.cr_id == current_cr_id %}selected{% endif %}>
+                {{ c.cr_id }}: {{ c.title[:35] }}...
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+{% if explanation %}
+<!-- Main Trust Score & Confidence Banner -->
+<div class="card mb-4 border-{% if explanation.trust_score >= 80 %}success{% elif explanation.trust_score >= 60 %}warning{% else %}danger{% endif %} shadow-sm">
+    <div class="card-body">
+        <div class="row align-items-center g-3">
+            <div class="col-md-3 text-center border-end">
+                <div class="text-uppercase small fw-bold text-muted">Computed Trust Score</div>
+                <div class="display-4 fw-bold text-{% if explanation.trust_score >= 80 %}success{% elif explanation.trust_score >= 60 %}warning{% else %}danger{% endif %}">
+                    {{ explanation.trust_score }}<span class="fs-4 text-muted">/100</span>
+                </div>
+                <div class="mt-2">
+                    <span class="badge {% if explanation.evidence_confidence == 'High' %}bg-primary{% elif explanation.evidence_confidence == 'Medium' %}bg-info text-dark{% else %}bg-secondary{% endif %} fs-6 px-3 py-1">
+                        Evidence Confidence: {{ explanation.evidence_confidence }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="col-md-6 border-end">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-dark">{{ explanation.cr.cr_id }}</span>
+                    <h5 class="fw-bold m-0 text-dark">{{ explanation.cr.title }}</h5>
+                </div>
+                <div class="p-2 rounded bg-light border fw-semibold small text-dark mb-2">
+                    <i class="fa-solid fa-bullseye text-primary me-2"></i> Recommendation: {{ explanation.recommendation }}
+                </div>
+                <div class="small text-secondary">
+                    <i class="fa-solid fa-arrow-right text-success me-1"></i> <strong>Prescribed Action:</strong> {{ explanation.suggested_next_step }}
+                </div>
+            </div>
+
+            <div class="col-md-3 text-center">
+                <a href="{{ url_for('change.cr_detail', cr_id=explanation.cr.cr_id) }}" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                    <i class="fa-solid fa-file-pen me-1"></i> Open CR Details
+                </a>
+                <a href="{{ url_for('change.ccb_review_queue') }}" class="btn btn-warning text-dark btn-sm w-100">
+                    <i class="fa-solid fa-gavel me-1"></i> CCB Review Decision
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Factor Decomposition Breakdown Row -->
+<div class="row g-3 mb-4">
+    <!-- Positive Factors Panel -->
+    <div class="col-lg-6">
+        <div class="card h-100 border-success">
+            <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-success"><i class="fa-solid fa-circle-plus me-2"></i> Positive Trust Drivers (Points Added)</span>
+                <span class="badge bg-success">{{ explanation.positive_factors | length }} Factors Identified</span>
+            </div>
+            <div class="card-body">
+                {% for factor in explanation.positive_factors %}
+                <div class="factor-card positive">
+                    <i class="fa-solid fa-check-circle text-success fs-5 mt-1"></i>
+                    <div>
+                        <div class="fw-semibold text-dark">{{ factor }}</div>
+                        <small class="text-secondary">Corroborated by verified organizational knowledge or low category drift.</small>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted small fst-italic">No strong positive trust drivers found.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Factors Panel -->
+    <div class="col-lg-6">
+        <div class="card h-100 border-danger">
+            <div class="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i> Risk Drivers & Penalties (Points Deducted)</span>
+                <span class="badge bg-danger">{{ explanation.risk_factors | length }} Risk Factors</span>
+            </div>
+            <div class="card-body">
+                {% for factor in explanation.risk_factors %}
+                <div class="factor-card risk">
+                    <i class="fa-solid fa-circle-exclamation text-danger fs-5 mt-1"></i>
+                    <div>
+                        <div class="fw-semibold text-dark">{{ factor }}</div>
+                        <small class="text-secondary">Requires automated test assertions or CCB architectural validation.</small>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-success small mb-0">
+                    <i class="fa-solid fa-circle-check me-2"></i> Zero critical risk factors detected.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Factor Contribution Score Table -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="fa-solid fa-calculator me-2 text-primary"></i> Multi-Factor Quantitative Breakdown</span>
+        <span class="badge bg-light text-secondary border font-monospace">Transparent Model Calculation</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>Evaluation Dimension</th>
+                    <th>Impact Direction</th>
+                    <th>Calculated Point Impact</th>
+                    <th>Analytical Rationale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in explanation.factor_contributions %}
+                <tr>
+                    <td class="fw-semibold text-dark">{{ f.factor }}</td>
+                    <td>
+                        {% if f.impact == 'Positive' %}
+                        <span class="badge bg-success"><i class="fa-solid fa-arrow-up me-1"></i> Positive</span>
+                        {% else %}
+                        <span class="badge bg-danger"><i class="fa-solid fa-arrow-down me-1"></i> Negative Penalty</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong class="{% if f.points >= 0 %}text-success{% else %}text-danger{% endif %} fs-6 font-monospace">
+                            {% if f.points > 0 %}+{% endif %}{{ f.points }} pts
+                        </strong>
+                    </td>
+                    <td><small class="text-secondary">{{ f.description }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Relevant Historical Records Cited from Organizational Memory -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold"><i class="fa-solid fa-memory me-2 text-purple"></i> Retrieved Historical Precedents from Organizational Memory</span>
+            <small class="text-muted ms-2">(Influenced this score: {{ explanation.metrics.success_count }} Success, {{ explanation.metrics.failure_count }} Failure, {{ explanation.metrics.rollback_count }} Rollback)</small>
+        </div>
+        <span class="badge bg-light text-dark border">{{ explanation.matched_memories | length }} Cited Precedents</span>
+    </div>
+    <div class="card-body">
+        {% if explanation.matched_memories %}
+        <div class="row g-3">
+            {% for m in explanation.matched_memories %}
+            <div class="col-md-6">
+                <div class="card h-100 border-{% if m.outcome == 'Success' %}success{% elif m.outcome == 'Rollback' %}warning{% else %}danger{% endif %}">
+                    <div class="card-header d-flex justify-content-between align-items-center py-2 bg-light">
+                        <a href="{{ url_for('memory.memory_detail', memory_id=m.memory_id) }}" class="fw-bold text-decoration-none">
+                            {{ m.memory_id }}: {{ m.change_type }}
+                        </a>
+                        <span class="badge bg-primary">{{ m.similarity_score }}% Match</span>
+                    </div>
+                    <div class="card-body py-2">
+                        <p class="small text-secondary mb-2">{{ m.description }}</p>
+                        <div class="mb-2">
+                            <span class="badge {{ m.outcome | status_badge }} me-1">{{ m.outcome }}</span>
+                            <span class="badge {{ m.test_result | status_badge }}">Tests: {{ m.test_result }}</span>
+                        </div>
+                        {% if m.lessons_learned %}
+                        <div class="p-2 bg-light rounded border small">
+                            <strong>Lesson Learned:</strong> {{ m.lessons_learned }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+            <i class="fa-solid fa-brain fs-3 d-block mb-2"></i>
+            No direct precedent found in organizational memory.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="card text-center py-5">
+    <div class="card-body">
+        <h5>No Change Request selected or found.</h5>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

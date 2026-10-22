@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration Baselines{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Configuration Baselines</h3>
+        <p class="text-secondary small m-0">Formally approved and frozen sets of configuration items serving as the authoritative reference for future changes.</p>
+    </div>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#newBaselineCollapse">
+        <i class="fa-solid fa-plus me-1"></i> Establish New Baseline
+    </button>
+</div>
+
+<!-- Establish New Baseline Collapse Form -->
+<div class="collapse mb-4" id="newBaselineCollapse">
+    <div class="card border-primary">
+        <div class="card-header bg-primary bg-opacity-10">
+            <span class="fw-bold text-primary"><i class="fa-solid fa-layer-group me-2"></i> Freeze Configuration Baseline</span>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('scm.baselines') }}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Baseline Name *</label>
+                        <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Baseline 3.0 - Security Hardened Release" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Description</label>
+                        <input type="text" name="description" class="form-control form-control-sm" placeholder="Formal justification for freezing this baseline...">
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Select Approved Configuration Items to Include in Baseline *</label>
+                        <div class="table-responsive border rounded p-2" style="max-height: 250px; overflow-y: auto;">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;">Select</th>
+                                        <th>CI Identifier</th>
+                                        <th>Item Name</th>
+                                        <th>Category</th>
+                                        <th>Approved Version to Freeze</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ci in approved_cis %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" name="ci_ids" value="{{ ci.ci_id }}" checked>
+                                        </td>
+                                        <td><strong>{{ ci.ci_id }}</strong></td>
+                                        <td>{{ ci.name }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ ci.category }}</span></td>
+                                        <td>
+                                            <input type="text" name="version_{{ ci.ci_id }}" class="form-control form-control-sm py-0 font-monospace" value="{{ ci.current_version }}" style="max-width: 100px;">
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="form-text">Rule enforced: Only configuration items with 'Approved' status are eligible for baseline inclusion.</div>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#newBaselineCollapse">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-lock me-1"></i> Authorize & Freeze Baseline
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Baselines List -->
+<div class="row g-3">
+    {% for bl in baselines %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary fs-6">{{ bl.baseline_id }}</span>
+                    <h5 class="fw-bold m-0 text-dark">{{ bl.name }}</h5>
+                </div>
+                <div>
+                    <span class="badge bg-success me-2">{{ bl.approval_status }}</span>
+                    <small class="text-muted">Established by <strong>{{ bl.created_by }}</strong> on {{ bl.creation_date.strftime('%Y-%m-%d') }}</small>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="small text-secondary mb-3">{{ bl.description }}</p>
+                
+                <h6 class="small fw-bold text-uppercase text-muted mb-2">Frozen Configuration Items ({{ bl.items.count() }} Items)</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 0.85rem;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>CI Identifier</th>
+                                <th>Item Name</th>
+                                <th>Frozen Version</th>
+                                <th>Integrity Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in bl.items %}
+                            <tr>
+                                <td><a href="{{ url_for('configuration.ci_detail', ci_id=item.ci_id) }}" class="fw-bold text-decoration-none">{{ item.ci_id }}</a></td>
+                                <td>{{ item.ci_name }}</td>
+                                <td><span class="badge bg-dark font-monospace">v{{ item.version_number }}</span></td>
+                                <td><span class="badge bg-success">{{ item.status }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

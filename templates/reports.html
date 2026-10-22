@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Audit Export Center{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">SCM Reports & Export Center</h3>
+        <p class="text-secondary small m-0">Generate formal audit documents, tabular ledgers, and download CSV exports derived directly from the active SQLite database.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('report.export_csv', report_type=selected_type) }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-file-arrow-down me-1"></i> Export Active Report (CSV)
+        </a>
+    </div>
+</div>
+
+<!-- Report Navigation Tabs -->
+<ul class="nav nav-pills mb-4 flex-wrap gap-1 bg-white p-2 rounded border shadow-sm">
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'status_accounting' %}active{% endif %}" href="{{ url_for('report.index', type='status_accounting') }}">
+            <i class="fa-solid fa-table-list me-1"></i> Status Accounting
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'ci' %}active{% endif %}" href="{{ url_for('report.index', type='ci') }}">
+            <i class="fa-solid fa-cubes me-1"></i> Configuration Items
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'version' %}active{% endif %}" href="{{ url_for('report.index', type='version') }}">
+            <i class="fa-solid fa-code-branch me-1"></i> Version History
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'change' %}active{% endif %}" href="{{ url_for('report.index', type='change') }}">
+            <i class="fa-solid fa-code-pull-request me-1"></i> Change Requests
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'trust' %}active{% endif %}" href="{{ url_for('report.index', type='trust') }}">
+            <i class="fa-solid fa-shield-halved me-1"></i> Trust Evaluations
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'memory' %}active{% endif %}" href="{{ url_for('report.index', type='memory') }}">
+            <i class="fa-solid fa-brain me-1"></i> Org Memory
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'fca' %}active{% endif %}" href="{{ url_for('report.index', type='fca') }}">
+            <i class="fa-solid fa-clipboard-check me-1"></i> FCA Audits
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'pca' %}active{% endif %}" href="{{ url_for('report.index', type='pca') }}">
+            <i class="fa-solid fa-microchip me-1"></i> PCA Audits
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn-sm {% if selected_type == 'baseline' %}active{% endif %}" href="{{ url_for('report.index', type='baseline') }}">
+            <i class="fa-solid fa-layer-group me-1"></i> Baselines & Releases
+        </a>
+    </li>
+</ul>
+
+<!-- Report Table Card -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-dark">
+            <i class="fa-solid fa-file-lines me-2 text-primary"></i> 
+            {{ selected_type | replace('_', ' ') | title }} Audit Ledger
+        </span>
+        <span class="badge bg-light text-secondary border">{{ report_data.rows | length }} Records Generated</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    {% for h in report_data.headers %}
+                    <th>{{ h }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report_data.rows %}
+                <tr>
+                    {% for cell in row %}
+                    <td>
+                        <span class="small">{{ cell }}</span>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ report_data.headers | length }}" class="text-center py-4 text-muted">
+                        No records available for this report.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

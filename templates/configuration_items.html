@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration Items{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Configuration Items (CIs)</h3>
+        <p class="text-secondary small m-0">Catalog of identified software artifacts, documents, schemas, and models under formal SCM control.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('configuration.new_ci') }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus me-1"></i> Identify New CI
+        </a>
+        <a href="{{ url_for('configuration.traceability') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-diagram-project me-1"></i> Traceability View
+        </a>
+    </div>
+</div>
+
+<!-- Filters & Search Toolbar -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="GET" action="{{ url_for('configuration.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by ID, name, owner..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="category" class="form-select form-select-sm">
+                    <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="All" {% if selected_status == 'All' %}selected{% endif %}>All Statuses</option>
+                    {% for st in statuses %}
+                    <option value="{{ st }}" {% if selected_status == st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+                <a href="{{ url_for('configuration.index') }}" class="btn btn-sm btn-outline-secondary" title="Reset Filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- CI Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Found <strong>{{ cis | length }}</strong> Configuration Items</span>
+        <span class="badge bg-light text-secondary border">SCM Baseline Integrity</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>CI Identifier</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Current Version</th>
+                    <th>Owner</th>
+                    <th>Lifecycle Status</th>
+                    <th>Baseline Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ci in cis %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('configuration.ci_detail', ci_id=ci.ci_id) }}" class="fw-bold text-decoration-none">
+                            {{ ci.ci_id }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="fw-medium text-dark">{{ ci.name }}</span>
+                        {% if ci.file_path %}
+                        <br><small class="text-muted"><i class="fa-regular fa-file-code me-1"></i>{{ ci.file_path }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-secondary border">{{ ci.category }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-dark">v{{ ci.current_version }}</span>
+                    </td>
+                    <td>
+                        <small class="text-muted"><i class="fa-solid fa-user me-1"></i>{{ ci.owner }}</small>
+                    </td>
+                    <td>
+                        <span class="badge {{ ci.status | status_badge }}">{{ ci.status }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {{ ci.baseline_status | status_badge }}">{{ ci.baseline_status }}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('configuration.ci_detail', ci_id=ci.ci_id) }}" class="btn btn-outline-primary" title="View Details">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            <a href="{{ url_for('scm.version_history') }}?ci_id={{ ci.ci_id }}" class="btn btn-outline-secondary" title="Version History">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-box-open fs-3 d-block mb-2"></i>
+                        No Configuration Items match the selected criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

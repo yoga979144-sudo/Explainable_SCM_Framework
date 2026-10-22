@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Version History & Repository Control{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Configuration Version History</h3>
+        <p class="text-secondary small m-0">Audit-grade version progression tracking and comparison for all configuration artifacts.</p>
+    </div>
+    <a href="{{ url_for('scm.version_compare') }}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-code-compare me-1"></i> Launch Version Comparator
+    </a>
+</div>
+
+<!-- Git vs Application SCM Distinction Notice -->
+<div class="card mb-4 border-{% if local_git.installed %}success{% else %}warning{% endif %}">
+    <div class="card-body">
+        <div class="d-flex align-items-start gap-3">
+            <div class="fs-3 text-{% if local_git.installed %}success{% else %}warning{% endif %}">
+                <i class="fa-brands fa-git-alt"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <h5 class="fw-bold m-0">Version Control Architecture Status</h5>
+                    <span class="badge {% if local_git.installed %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                        {{ local_git.message }}
+                    </span>
+                </div>
+                <p class="small text-muted mb-2">
+                    <strong>Architectural Note:</strong> This framework enforces formal separation between <em>application-level configuration baselines</em> (stored with metadata and approval audit trails in the relational database) and <em>low-level Git repository commits</em>. Database version records provide organizational memory, trust lineage, and approval governance.
+                </p>
+                {% if local_git.installed and local_git.commits %}
+                <div class="mt-2">
+                    <h6 class="small fw-bold text-uppercase text-muted">Recent Local Git Commits:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered bg-light mb-0" style="font-size: 0.8rem;">
+                            <thead>
+                                <tr>
+                                    <th>Commit Hash</th>
+                                    <th>Author</th>
+                                    <th>Date</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in local_git.commits %}
+                                <tr>
+                                    <td><code>{{ c.hash }}</code></td>
+                                    <td>{{ c.author }}</td>
+                                    <td>{{ c.date }}</td>
+                                    <td>{{ c.message }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application-Level Version History Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Application-Level Configuration Version Records</span>
+        <span class="badge bg-light text-secondary border">{{ versions | length }} Version Entities</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>Version Identifier</th>
+                    <th>Configuration Item</th>
+                    <th>Version Number</th>
+                    <th>Author</th>
+                    <th>Change Summary</th>
+                    <th>Approval Status</th>
+                    <th>Recorded Timestamp</th>
+                    <th>Compare Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ver in versions %}
+                <tr>
+                    <td><code>{{ ver.version_id }}</code></td>
+                    <td>
+                        <a href="{{ url_for('configuration.ci_detail', ci_id=ver.ci_id) }}" class="fw-bold text-decoration-none">
+                            {{ ver.ci_id }}
+                        </a>
+                    </td>
+                    <td><span class="badge bg-dark">v{{ ver.version_number }}</span></td>
+                    <td><small class="text-muted"><i class="fa-solid fa-user me-1"></i>{{ ver.author }}</small></td>
+                    <td>
+                        <span class="small">{{ ver.change_description }}</span>
+                    </td>
+                    <td><span class="badge {{ ver.approval_status | status_badge }}">{{ ver.approval_status }}</span></td>
+                    <td><small class="text-muted">{{ ver.timestamp.strftime('%Y-%m-%d %H:%M') }}</small></td>
+                    <td>
+                        {% if ver.previous_version %}
+                        <a href="{{ url_for('scm.version_compare') }}?ci_id={{ ver.ci_id }}&v1={{ ver.previous_version }}&v2={{ ver.version_number }}" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem;">
+                            <i class="fa-solid fa-code-compare me-1"></i> Diff with v{{ ver.previous_version }}
+                        </a>
+                        {% else %}
+                        <span class="text-muted small fst-italic">Initial Baseline</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

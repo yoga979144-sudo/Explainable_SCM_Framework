@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}SCM Standards & Process Improvement{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">SCM Standards & Process Improvement Mapping</h3>
+        <p class="text-secondary small m-0">Academic reference mapping framework capabilities to established international software engineering standards.</p>
+    </div>
+    <span class="badge bg-primary fs-6 px-3 py-2">
+        <i class="fa-solid fa-graduation-cap me-1"></i> Academic Review Reference
+    </span>
+</div>
+
+<!-- Academic Disclaimer Callout -->
+<div class="alert alert-info border-info small mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <i class="fa-solid fa-circle-info fs-5 text-primary"></i>
+        <div>
+            <strong>Standards Alignment Notice:</strong> This framework is designed in alignment with international software configuration management best practices. The references below outline the foundational theoretical and process models referenced during development. This project does not claim formal third-party certification or regulatory compliance.
+        </div>
+    </div>
+</div>
+
+<!-- 4 Core Standards Reference Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-sm-6">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary bg-opacity-10 py-2">
+                <span class="fw-bold text-primary">IEEE / SWEBOK v3.0</span>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold small text-dark">Primary SCM Knowledge Area</h6>
+                <p class="small text-secondary mb-0">
+                    Defines the 5 core activities of SCM: Configuration Identification, Configuration Control, Configuration Status Accounting, Configuration Auditing, and Release Management & Delivery.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-sm-6">
+        <div class="card h-100 border-success">
+            <div class="card-header bg-success bg-opacity-10 py-2">
+                <span class="fw-bold text-success">CMMI-DEV v2.0</span>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold small text-dark">Process Improvement Model</h6>
+                <p class="small text-secondary mb-0">
+                    Maps to Configuration Management (CM) practice area at Maturity Levels 2 and 3: establishing baselines, tracking work product changes, and performing configuration integrity audits.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-sm-6">
+        <div class="card h-100 border-warning">
+            <div class="card-header bg-warning bg-opacity-10 py-2">
+                <span class="fw-bold text-warning text-dark">ITIL v4 Service Mgmt</span>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold small text-dark">Service Configuration Control</h6>
+                <p class="small text-secondary mb-0">
+                    Provides principles for maintaining accurate information on the configuration of services and configuration items (CIs) supporting enterprise Change Enablement practices.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-sm-6">
+        <div class="card h-100 border-info">
+            <div class="card-header bg-info bg-opacity-10 py-2">
+                <span class="fw-bold text-info text-dark">ISO/IEC/IEEE 12207</span>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold small text-dark">Software Lifecycle Processes</h6>
+                <p class="small text-secondary mb-0">
+                    Governs the Configuration Management Process (Clause 6.4.10) to maintain the integrity of software work products throughout development, verification, and maintenance cycles.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comprehensive Implementation Mapping Matrix -->
+<div class="card">
+    <div class="card-header bg-light">
+        <span class="fw-bold"><i class="fa-solid fa-table me-2 text-primary"></i> Framework Implementation vs Standards Knowledge Areas</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">SCM Capability Area</th>
+                    <th style="width: 25%;">Governing Standard Clause</th>
+                    <th style="width: 50%;">Implemented Feature in Framework</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Configuration Identification</strong></td>
+                    <td>SWEBOK Section 1 &bull; ISO 12207 6.4.10.3a</td>
+                    <td>10 CI classes cataloged with unique identifiers (CI-001..), owners, and multi-stage dependency traceability links.</td>
+                </tr>
+                <tr>
+                    <td><strong>Configuration Control & CCB</strong></td>
+                    <td>SWEBOK Section 2 &bull; CMMI CM 2.2</td>
+                    <td>Formal Change Request lifecycle with proposal, adaptive trust evaluation, and authorized Change Control Board (CCB) rulings.</td>
+                </tr>
+                <tr>
+                    <td><strong>Configuration Status Accounting</strong></td>
+                    <td>SWEBOK Section 3 &bull; ITIL SACM</td>
+                    <td>Real-time reporting ledger displaying lifecycle, approval, baseline, and release status with CSV export capability.</td>
+                </tr>
+                <tr>
+                    <td><strong>Configuration Auditing</strong></td>
+                    <td>SWEBOK Section 4 &bull; IEEE 828</td>
+                    <td>Dedicated Functional Configuration Audits (FCA) and Physical Configuration Audits (PCA) with objective checklist evaluation.</td>
+                </tr>
+                <tr>
+                    <td><strong>Version & Release Management</strong></td>
+                    <td>SWEBOK Section 5 &bull; ISO 12207 6.4.10.3e</td>
+                    <td>Differential comparison between version baselines, release packaging, and local Git repository commit integration.</td>
+                </tr>
+                <tr>
+                    <td><strong>Organizational Memory (Novel)</strong></td>
+                    <td>Knowledge Mgmt / Empirical SE</td>
+                    <td>Continuous database repository capturing past changes, test results, rollbacks, and lessons learned for reuse.</td>
+                </tr>
+                <tr>
+                    <td><strong>Adaptive Trust Learning (Novel)</strong></td>
+                    <td>Trustworthy AI & Soft Computing</td>
+                    <td>Multi-factor reliability engine using TF-IDF cosine similarity, historical outcomes, and risk penalties (0-100 score).</td>
+                </tr>
+                <tr>
+                    <td><strong>Explainable AI Diagnostics (Novel)</strong></td>
+                    <td>XAI Principles (Explainable SCM)</td>
+                    <td>Decomposition of trust drivers into positive and risk factors, cited precedents, and transparent mathematical formulation.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

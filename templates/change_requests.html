@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Change Requests{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Configuration Change Requests (CRs)</h3>
+        <p class="text-secondary small m-0">Formal proposal, trust evaluation, CCB review, and lifecycle execution pipeline.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('change.new_cr') }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus me-1"></i> Submit New Change Request
+        </a>
+        <a href="{{ url_for('change.ccb_review_queue') }}" class="btn btn-outline-warning text-dark btn-sm">
+            <i class="fa-solid fa-gavel me-1"></i> CCB Review Queue
+        </a>
+    </div>
+</div>
+
+<!-- Filters Toolbar -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="GET" action="{{ url_for('change.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by CR ID, title, requester..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="All" {% if selected_status == 'All' %}selected{% endif %}>All Statuses</option>
+                    {% for st in statuses %}
+                    <option value="{{ st }}" {% if selected_status == st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="risk" class="form-select form-select-sm">
+                    <option value="All" {% if selected_risk == 'All' %}selected{% endif %}>All Risk Levels</option>
+                    <option value="Low" {% if selected_risk == 'Low' %}selected{% endif %}>Low Risk</option>
+                    <option value="Medium" {% if selected_risk == 'Medium' %}selected{% endif %}>Medium Risk</option>
+                    <option value="High" {% if selected_risk == 'High' %}selected{% endif %}>High Risk</option>
+                    <option value="Critical" {% if selected_risk == 'Critical' %}selected{% endif %}>Critical Risk</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+                <a href="{{ url_for('change.index') }}" class="btn btn-sm btn-outline-secondary" title="Reset Filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- CR Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Found <strong>{{ crs | length }}</strong> Change Requests</span>
+        <span class="badge bg-light text-secondary border">Lifecycle Gate Enforcement</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>CR ID</th>
+                    <th>Title & Description</th>
+                    <th>Target CI</th>
+                    <th>Requester</th>
+                    <th>Risk / Impact</th>
+                    <th>Trust Score</th>
+                    <th>Lifecycle Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cr in crs %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('change.cr_detail', cr_id=cr.cr_id) }}" class="fw-bold text-decoration-none">
+                            {{ cr.cr_id }}
+                        </a>
+                    </td>
+                    <td>
+                        <div class="fw-medium text-dark text-truncate" style="max-width: 250px;" title="{{ cr.title }}">
+                            {{ cr.title }}
+                        </div>
+                        <small class="text-muted d-block text-truncate" style="max-width: 250px;">{{ cr.reason_for_change }}</small>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('configuration.ci_detail', ci_id=cr.affected_ci_id) }}" class="badge bg-light text-dark border text-decoration-none">
+                            {{ cr.affected_ci_id }}
+                        </a>
+                    </td>
+                    <td>
+                        <small class="text-muted"><i class="fa-solid fa-user me-1"></i>{{ cr.requester }}</small>
+                    </td>
+                    <td>
+                        <span class="badge {% if cr.risk_level == 'Critical' %}bg-danger{% elif cr.risk_level == 'High' %}bg-warning text-dark{% else %}bg-light text-dark border{% endif %}">
+                            {{ cr.risk_level }}
+                        </span>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Impact: {{ cr.business_impact }}</small>
+                    </td>
+                    <td>
+                        {% if cr.trust_score is not none %}
+                        <span class="badge {{ cr.trust_score | trust_badge }}">
+                            {{ cr.trust_score }}/100
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {{ cr.current_status | status_badge }}">{{ cr.current_status }}</span>
+                        {% if cr.final_decision %}
+                        <small class="d-block text-muted" style="font-size: 0.72rem;">CCB: {{ cr.final_decision }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('change.cr_detail', cr_id=cr.cr_id) }}" class="btn btn-outline-primary" title="View Detail & CCB Review">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            <a href="{{ url_for('trust.explainability_view', cr_id=cr.cr_id) }}" class="btn btn-outline-success" title="Explainability Diagnostic">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-inbox fs-3 d-block mb-2"></i>
+                        No Change Requests found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

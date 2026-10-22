@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Identify New Configuration Item{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <a href="{{ url_for('configuration.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <h4 class="fw-bold m-0 text-dark">Identify New Configuration Item (CI)</h4>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span>SCM Identification Specifications</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('configuration.new_ci') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">CI Identifier (Optional, auto-generated if blank)</label>
+                            <input type="text" name="ci_id" class="form-control form-control-sm" placeholder="e.g. CI-013">
+                            <div class="form-text">Follows IEEE 828 identifier naming convention.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Configuration Item Name *</label>
+                            <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Payment Gateway Adapter" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Category *</label>
+                            <select name="category" class="form-select form-select-sm" required>
+                                {% for cat in categories %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Owner / Technical Lead *</label>
+                            <input type="text" name="owner" class="form-control form-control-sm" value="{{ session.get('username', 'Developer') }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Initial Version *</label>
+                            <input type="text" name="current_version" class="form-control form-control-sm" value="1.0" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Initial Status</label>
+                            <select name="status" class="form-select form-select-sm">
+                                {% for st in statuses %}
+                                <option value="{{ st }}" {% if st == 'Approved' %}selected{% endif %}>{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">File / Repository Path</label>
+                            <input type="text" name="file_path" class="form-control form-control-sm" placeholder="e.g. src/services/payment_service.py">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Functional Description</label>
+                            <textarea name="description" rows="3" class="form-control form-control-sm" placeholder="Detailed purpose and responsibilities of this configuration item..."></textarea>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4">
+                            <a href="{{ url_for('configuration.index') }}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Register Configuration Item
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

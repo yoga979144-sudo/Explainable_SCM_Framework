@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Record Historical Configuration Memory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <a href="{{ url_for('memory.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <h4 class="fw-bold m-0 text-dark">Add Historical Organizational Memory Record</h4>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-light">
+                <span class="fw-bold"><i class="fa-solid fa-brain me-2 text-primary"></i> Precedent & Lesson Learning Specification</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('memory.new_memory') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">CI Category *</label>
+                            <select name="category" class="form-select form-select-sm" required>
+                                {% for cat in categories %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Change Type / Classification *</label>
+                            <input type="text" name="change_type" class="form-control form-control-sm" placeholder="e.g. Trust Threshold Tuning" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Description of Historical Change *</label>
+                            <textarea name="description" rows="2" class="form-control form-control-sm" placeholder="What configuration modification was performed?" required></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Relevant Characteristics & Keywords</label>
+                            <input type="text" name="relevant_characteristics" class="form-control form-control-sm" placeholder="e.g. threshold_adjustment, staging_pipeline, regression_reduction">
+                            <div class="form-text">Used by TF-IDF vectorizer to calculate semantic alignment during future change requests.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Previous Configuration Value</label>
+                            <input type="text" name="previous_value" class="form-control form-control-sm" placeholder="e.g. trust_threshold = 65">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">New Configuration Value</label>
+                            <input type="text" name="new_value" class="form-control form-control-sm" placeholder="e.g. trust_threshold = 70">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Historical Trust Score</label>
+                            <input type="number" step="0.1" name="historical_trust_score" class="form-control form-control-sm" placeholder="e.g. 82.0" min="0" max="100">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Verification Test Result</label>
+                            <select name="test_result" class="form-select form-select-sm">
+                                <option value="Passed">Passed</option>
+                                <option value="Failed">Failed</option>
+                                <option value="Partial">Partial</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Implementation Outcome *</label>
+                            <select name="implementation_outcome" class="form-select form-select-sm" required>
+                                <option value="Success">Success</option>
+                                <option value="Rollback">Rollback</option>
+                                <option value="Failure">Failure</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Success or Failure Observations</label>
+                            <textarea name="failure_success_details" rows="2" class="form-control form-control-sm" placeholder="What specific impacts or anomalies occurred in production/staging?"></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Lessons Learned / Actionable Insight *</label>
+                            <textarea name="lessons_learned" rows="2" class="form-control form-control-sm" placeholder="Key guidance for future developers evaluating similar changes..." required></textarea>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4">
+                            <a href="{{ url_for('memory.index') }}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Save to Organizational Memory
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

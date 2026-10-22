@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration Traceability Matrix{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Traceability Matrix & Lifecycle Graph</h3>
+        <p class="text-secondary small m-0">End-to-end traceability mapping requirements to code, automated tests, configurations, and releases.</p>
+    </div>
+    <a href="{{ url_for('configuration.index') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to CIs
+    </a>
+</div>
+
+<!-- Traceability Flow Diagram Card -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <span class="fw-bold"><i class="fa-solid fa-network-wired me-2 text-primary"></i> SCM Traceability Flow Architecture</span>
+    </div>
+    <div class="card-body">
+        <div class="row text-center g-2 py-3">
+            <div class="col">
+                <div class="p-3 border rounded bg-light">
+                    <i class="fa-solid fa-file-contract text-primary fs-3 mb-2"></i>
+                    <h6 class="fw-bold mb-1">1. Requirements</h6>
+                    <small class="text-muted">SRS Documents (CI-003)</small>
+                </div>
+            </div>
+            <div class="col-auto d-flex align-items-center">
+                <i class="fa-solid fa-arrow-right text-muted"></i>
+            </div>
+            <div class="col">
+                <div class="p-3 border rounded bg-light">
+                    <i class="fa-solid fa-code text-success fs-3 mb-2"></i>
+                    <h6 class="fw-bold mb-1">2. Source Code</h6>
+                    <small class="text-muted">Server & RBAC (CI-001, CI-002)</small>
+                </div>
+            </div>
+            <div class="col-auto d-flex align-items-center">
+                <i class="fa-solid fa-arrow-right text-muted"></i>
+            </div>
+            <div class="col">
+                <div class="p-3 border rounded bg-light">
+                    <i class="fa-solid fa-vial-circle-check text-warning fs-3 mb-2"></i>
+                    <h6 class="fw-bold mb-1">3. Test Suites</h6>
+                    <small class="text-muted">Automated Tests (CI-005)</small>
+                </div>
+            </div>
+            <div class="col-auto d-flex align-items-center">
+                <i class="fa-solid fa-arrow-right text-muted"></i>
+            </div>
+            <div class="col">
+                <div class="p-3 border rounded bg-light">
+                    <i class="fa-solid fa-sliders text-info fs-3 mb-2"></i>
+                    <h6 class="fw-bold mb-1">4. Configurations</h6>
+                    <small class="text-muted">Trust Params (CI-006, CI-007)</small>
+                </div>
+            </div>
+            <div class="col-auto d-flex align-items-center">
+                <i class="fa-solid fa-arrow-right text-muted"></i>
+            </div>
+            <div class="col">
+                <div class="p-3 border rounded bg-light">
+                    <i class="fa-solid fa-box-archive text-purple fs-3 mb-2"></i>
+                    <h6 class="fw-bold mb-1">5. Releases</h6>
+                    <small class="text-muted">Audited Bundles (REL-002)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Traceability Links Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Active Configuration Traceability Links</span>
+        <span class="badge bg-light text-secondary border">{{ graph_data.links | length }} Link Relations</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>Source Artifact</th>
+                    <th>Relationship</th>
+                    <th>Target Artifact</th>
+                    <th>Relationship Type</th>
+                    <th>Impact Analysis Scope</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for link in graph_data.links %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('configuration.ci_detail', ci_id=link.source) }}" class="fw-bold text-decoration-none">
+                            {{ link.source }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary text-white">&rarr; {{ link.type }} &rarr;</span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('configuration.ci_detail', ci_id=link.target) }}" class="fw-bold text-decoration-none">
+                            {{ link.target }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ link.type }}</span>
+                    </td>
+                    <td>
+                        <small class="text-muted">Direct ripple impact if either artifact is modified.</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Change Request{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <a href="{{ url_for('change.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <h4 class="fw-bold m-0 text-dark">Submit Configuration Change Request (CR)</h4>
+                <p class="text-secondary small m-0">Propose a change. The adaptive trust engine will immediately evaluate reliability using organizational memory.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-light">
+                <span class="fw-bold"><i class="fa-solid fa-code-pull-request me-2 text-primary"></i> Change Proposal Specification</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('change.new_cr') }}">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Change Title *</label>
+                            <input type="text" name="title" class="form-control form-control-sm" placeholder="e.g. CONFIGURATION TRUST THRESHOLD CHANGE" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Affected Configuration Item *</label>
+                            <select name="affected_ci_id" class="form-select form-select-sm" required>
+                                <option value="">-- Select Target CI --</option>
+                                {% for ci in cis %}
+                                <option value="{{ ci.ci_id }}">
+                                    {{ ci.ci_id }}: {{ ci.name }} ({{ ci.category }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Assigned Developer / Implementer</label>
+                            <input type="text" name="assigned_developer" class="form-control form-control-sm" value="{{ session.get('username', 'Developer') }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Risk Level *</label>
+                            <select name="risk_level" class="form-select form-select-sm" required>
+                                <option value="Low">Low (Minimal architectural ripple)</option>
+                                <option value="Medium" selected>Medium (Standard operational change)</option>
+                                <option value="High">High (Core subsystem modification)</option>
+                                <option value="Critical">Critical (Security or data architecture alteration)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Business Impact *</label>
+                            <select name="business_impact" class="form-select form-select-sm" required>
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Reason for Change / Justification *</label>
+                            <textarea name="reason_for_change" rows="2" class="form-control form-control-sm" placeholder="Explain the motivation and expected business or technical benefits..." required></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Detailed Description of Change</label>
+                            <textarea name="description" rows="2" class="form-control form-control-sm" placeholder="Detailed architectural description of modifications to be made..."></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Proposed Configuration Payload / Code Diff *</label>
+                            <textarea name="proposed_value" rows="5" class="form-control form-control-sm font-monospace" placeholder="Enter configuration values, YAML/JSON parameters, or code snippet to be applied..." required></textarea>
+                            <div class="form-text">Used to compute diffs against the active version baseline and perform similarity analysis.</div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4">
+                            <a href="{{ url_for('change.index') }}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="fa-solid fa-paper-plane me-1"></i> Submit Change for Trust Evaluation
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

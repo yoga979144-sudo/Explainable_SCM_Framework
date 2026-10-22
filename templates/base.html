@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} - Explainable SCM Framework</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <!-- Sidebar Navigation -->
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading">
+                <i class="fa-solid fa-network-wired text-primary"></i>
+                <div class="d-flex flex-column">
+                    <span>SCM Framework</span>
+                    <span class="badge-academic">ADAPTIVE TRUST v2.0</span>
+                </div>
+            </div>
+
+            <div class="nav-section-title">Core Operations</div>
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="{{ url_for('dashboard.index') }}" class="{% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-line"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('configuration.index') }}" class="{% if request.endpoint and ('configuration.index' in request.endpoint or 'configuration.ci_detail' in request.endpoint) %}active{% endif %}">
+                        <i class="fa-solid fa-cubes"></i> Configuration Items
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('scm.version_history') }}" class="{% if request.endpoint and ('version_history' in request.endpoint or 'version_compare' in request.endpoint) %}active{% endif %}">
+                        <i class="fa-solid fa-code-branch"></i> Version History
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('change.index') }}" class="{% if request.endpoint and ('change.index' in request.endpoint or 'change.cr_detail' in request.endpoint or 'change.new_cr' in request.endpoint) %}active{% endif %}">
+                        <i class="fa-solid fa-code-pull-request"></i> Change Requests
+                        {% if pending_cr_count > 0 %}
+                        <span class="badge bg-warning text-dark ms-auto">{{ pending_cr_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+            </ul>
+
+            <div class="nav-section-title">Trust & Intelligence</div>
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="{{ url_for('memory.index') }}" class="{% if request.endpoint and 'memory' in request.endpoint %}active{% endif %}">
+                        <i class="fa-solid fa-brain"></i> Organizational Memory
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('trust.index') }}" class="{% if request.endpoint == 'trust.index' %}active{% endif %}">
+                        <i class="fa-solid fa-shield-halved"></i> Trust Evaluation
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('trust.explainability_view') }}" class="{% if request.endpoint and 'explainability' in request.endpoint %}active{% endif %}">
+                        <i class="fa-solid fa-lightbulb"></i> Explainability
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('change.ccb_review_queue') }}" class="{% if request.endpoint == 'change.ccb_review_queue' %}active{% endif %}">
+                        <i class="fa-solid fa-gavel"></i> CCB Review
+                    </a>
+                </li>
+            </ul>
+
+            <div class="nav-section-title">Control & Governance</div>
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="{{ url_for('scm.status_accounting') }}" class="{% if request.endpoint == 'scm.status_accounting' %}active{% endif %}">
+                        <i class="fa-solid fa-table-list"></i> Status Accounting
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('scm.baselines') }}" class="{% if request.endpoint == 'scm.baselines' %}active{% endif %}">
+                        <i class="fa-solid fa-layer-group"></i> Baselines
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('scm.releases') }}" class="{% if request.endpoint == 'scm.releases' %}active{% endif %}">
+                        <i class="fa-solid fa-box-archive"></i> Releases
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('audit.fca_index') }}" class="{% if request.endpoint == 'audit.fca_index' %}active{% endif %}">
+                        <i class="fa-solid fa-clipboard-check"></i> FCA Audit
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('audit.pca_index') }}" class="{% if request.endpoint == 'audit.pca_index' %}active{% endif %}">
+                        <i class="fa-solid fa-microchip"></i> PCA Audit
+                    </a>
+                </li>
+            </ul>
+
+            <div class="nav-section-title">Integration & Reference</div>
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="{{ url_for('scm.github_integration') }}" class="{% if request.endpoint == 'scm.github_integration' %}active{% endif %}">
+                        <i class="fa-brands fa-github"></i> GitHub Integration
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('scm.scm_standards') }}" class="{% if request.endpoint == 'scm.scm_standards' %}active{% endif %}">
+                        <i class="fa-solid fa-book-bookmark"></i> SCM Standards
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('report.index') }}" class="{% if request.endpoint == 'report.index' %}active{% endif %}">
+                        <i class="fa-solid fa-file-csv"></i> Reports & Export
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('report.settings') }}" class="{% if request.endpoint == 'report.settings' %}active{% endif %}">
+                        <i class="fa-solid fa-sliders"></i> Settings
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Page Content -->
+        <div id="page-content-wrapper">
+            <!-- Top Navbar -->
+            <nav class="top-navbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-secondary d-lg-none" id="menu-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <span class="fw-semibold text-secondary d-none d-md-inline" style="font-size: 0.9rem;">
+                        Explainable Organizational Memory-Driven SCM Framework
+                    </span>
+                </div>
+
+                <!-- User Role & Demo Switcher -->
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Quick Demo Role Switcher -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-users-gear me-1"></i> Switch Role
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <li><h6 class="dropdown-header">Demo Review Accounts</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='pm_user') }}"><i class="fa-solid fa-user-tie me-2 text-primary"></i> Project Manager</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='cm_user') }}"><i class="fa-solid fa-diagram-project me-2 text-info"></i> Configuration Manager</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='dev_user') }}"><i class="fa-solid fa-laptop-code me-2 text-success"></i> Developer</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='qa_user') }}"><i class="fa-solid fa-vial-circle-check me-2 text-warning"></i> QA Engineer</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='devops_user') }}"><i class="fa-solid fa-server me-2 text-secondary"></i> DevOps Engineer</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='analyst_user') }}"><i class="fa-solid fa-brain me-2 text-danger"></i> ML/Trust Analyst</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Team Member Logins</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='yogalakshmi') }}">YOGALAKSHMI S (PM Lead)</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='pavithra') }}">PAVITHRA L (CM Lead)</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.quick_login', username='yuvaraj') }}">YUVARAJ G (Dev/Trust)</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- User Info Pill -->
+                    {% if session.get('username') %}
+                    <div class="user-badge">
+                        <i class="fa-solid fa-circle-user text-secondary"></i>
+                        <span class="fw-medium">{{ session.get('full_name', session.get('username')) }}</span>
+                        <span class="role-pill">{{ session.get('role', 'Developer') }}</span>
+                        <a href="{{ url_for('auth.logout') }}" class="text-secondary ms-1" title="Sign Out">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-primary">Sign In</a>
+                    {% endif %}
+                </div>
+            </nav>
+
+            <!-- Main Container -->
+            <main class="container-fluid px-4 py-4 flex-grow-1">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                        {% if category == 'success' %}<i class="fa-solid fa-circle-check me-2"></i>{% endif %}
+                        {% if category == 'danger' %}<i class="fa-solid fa-circle-exclamation me-2"></i>{% endif %}
+                        {% if category == 'warning' %}<i class="fa-solid fa-triangle-exclamation me-2"></i>{% endif %}
+                        {% if category == 'info' %}<i class="fa-solid fa-circle-info me-2"></i>{% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+            <!-- Footer -->
+            <footer>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <div>
+                        <strong>Explainable SCM Framework</strong> &copy; 2026 Academic Final Year Project
+                    </div>
+                    <div class="text-secondary">
+                        Team: 
+                        <span class="badge bg-light text-dark border">YOGALAKSHMI S (23MIS0383)</span>
+                        <span class="badge bg-light text-dark border">PAVITHRA L (23MIS0160)</span>
+                        <span class="badge bg-light text-dark border">YUVARAJ G (24MIS0403)</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

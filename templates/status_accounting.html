@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration Status Accounting (CSA){% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Configuration Status Accounting (CSA)</h3>
+        <p class="text-secondary small m-0">Formal recording and reporting of configuration item descriptions, baselines, and deployment states.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('report.export_csv', report_type='status_accounting') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fa-solid fa-download me-1"></i> Export CSA Report (CSV)
+        </a>
+    </div>
+</div>
+
+<!-- Summary Metric Indicators Row -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-2 col-sm-4 col-6">
+        <div class="card p-3 text-center border-0 bg-white shadow-sm">
+            <div class="text-muted small fw-bold text-uppercase">Total CIs</div>
+            <div class="fs-3 fw-bold text-dark">{{ summary.total }}</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-sm-4 col-6">
+        <div class="card p-3 text-center border-0 bg-white shadow-sm border-start border-success border-4">
+            <div class="text-muted small fw-bold text-uppercase">Approved</div>
+            <div class="fs-3 fw-bold text-success">{{ summary.approved }}</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-sm-4 col-6">
+        <div class="card p-3 text-center border-0 bg-white shadow-sm border-start border-primary border-4">
+            <div class="text-muted small fw-bold text-uppercase">Baselined</div>
+            <div class="fs-3 fw-bold text-primary">{{ summary.baselined }}</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-sm-4 col-6">
+        <div class="card p-3 text-center border-0 bg-white shadow-sm border-start border-info border-4">
+            <div class="text-muted small fw-bold text-uppercase">Released</div>
+            <div class="fs-3 fw-bold text-info">{{ summary.released }}</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-sm-4 col-6">
+        <div class="card p-3 text-center border-0 bg-white shadow-sm border-start border-warning border-4">
+            <div class="text-muted small fw-bold text-uppercase">In Progress</div>
+            <div class="fs-3 fw-bold text-warning">{{ summary.in_progress }}</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-sm-4 col-6">
+        <div class="card p-3 text-center border-0 bg-white shadow-sm border-start border-danger border-4">
+            <div class="text-muted small fw-bold text-uppercase">Rejected</div>
+            <div class="fs-3 fw-bold text-danger">{{ summary.rejected }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Toolbar -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="GET" action="{{ url_for('scm.status_accounting') }}" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search CI ID, name..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <select name="category" class="form-select form-select-sm">
+                    <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="All" {% if selected_status == 'All' %}selected{% endif %}>All Statuses</option>
+                    {% for st in statuses %}
+                    <option value="{{ st }}" {% if selected_status == st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="owner" class="form-select form-select-sm">
+                    <option value="All" {% if selected_owner == 'All' %}selected{% endif %}>All Owners</option>
+                    {% for o in owners %}
+                    <option value="{{ o }}" {% if selected_owner == o %}selected{% endif %}>{{ o }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+                <a href="{{ url_for('scm.status_accounting') }}" class="btn btn-sm btn-outline-secondary" title="Reset Filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Status Accounting Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Formal Status Accounting Ledger</span>
+        <span class="badge bg-light text-secondary border">{{ cis | length }} Records Tabulated</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>CI ID</th>
+                    <th>Configuration Name</th>
+                    <th>Category</th>
+                    <th>Current Version</th>
+                    <th>Responsible Owner</th>
+                    <th>Lifecycle Status</th>
+                    <th>Approval Status</th>
+                    <th>Baseline Status</th>
+                    <th>Release Status</th>
+                    <th>Last Modified</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ci in cis %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('configuration.ci_detail', ci_id=ci.ci_id) }}" class="fw-bold text-decoration-none">
+                            {{ ci.ci_id }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="fw-semibold text-dark">{{ ci.name }}</span>
+                    </td>
+                    <td><span class="badge bg-light text-secondary border">{{ ci.category }}</span></td>
+                    <td><span class="badge bg-dark">v{{ ci.current_version }}</span></td>
+                    <td><small class="text-muted">{{ ci.owner }}</small></td>
+                    <td><span class="badge {{ ci.status | status_badge }}">{{ ci.status }}</span></td>
+                    <td><span class="badge {{ ci.approval_status | status_badge }}">{{ ci.approval_status }}</span></td>
+                    <td><span class="badge {{ ci.baseline_status | status_badge }}">{{ ci.baseline_status }}</span></td>
+                    <td><span class="badge {{ ci.release_status | status_badge }}">{{ ci.release_status }}</span></td>
+                    <td><small class="text-muted">{{ ci.last_modified_date.strftime('%Y-%m-%d %H:%M') if ci.last_modified_date else 'N/A' }}</small></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">
+                        No records match status accounting criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

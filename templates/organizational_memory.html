@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Organizational Memory Repository{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">Organizational Memory Repository</h3>
+        <p class="text-secondary small m-0">Institutional knowledge base of historical configuration changes, test outcomes, rollbacks, and empirical lessons learned.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('memory.new_memory') }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus me-1"></i> Add Memory Record
+        </a>
+        <a href="{{ url_for('memory.similarity_test') }}" class="btn btn-outline-info text-dark btn-sm">
+            <i class="fa-solid fa-magnifying-glass-chart me-1"></i> Similarity Retrieval Tester
+        </a>
+    </div>
+</div>
+
+<!-- Filters Toolbar -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="GET" action="{{ url_for('memory.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search lessons, keywords, change type..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="category" class="form-select form-select-sm">
+                    <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="outcome" class="form-select form-select-sm">
+                    <option value="All" {% if selected_outcome == 'All' %}selected{% endif %}>All Outcomes</option>
+                    {% for out in outcomes %}
+                    <option value="{{ out }}" {% if selected_outcome == out %}selected{% endif %}>{{ out }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+                <a href="{{ url_for('memory.index') }}" class="btn btn-sm btn-outline-secondary" title="Reset Filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Memory Records Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Found <strong>{{ memories | length }}</strong> Institutional Precedents</span>
+        <span class="badge bg-light text-secondary border">Continuous Learning Corpus</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>Memory ID</th>
+                    <th>CI Category</th>
+                    <th>Change Type</th>
+                    <th>Historical Description</th>
+                    <th>Historical Trust</th>
+                    <th>Test Result</th>
+                    <th>Implementation Outcome</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in memories %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('memory.memory_detail', memory_id=m.memory_id) }}" class="fw-bold text-decoration-none">
+                            {{ m.memory_id }}
+                        </a>
+                    </td>
+                    <td><span class="badge bg-light text-secondary border">{{ m.category }}</span></td>
+                    <td><span class="fw-semibold text-dark">{{ m.change_type }}</span></td>
+                    <td>
+                        <div class="text-truncate" style="max-width: 280px;" title="{{ m.description }}">
+                            {{ m.description }}
+                        </div>
+                        <small class="text-muted d-block text-truncate" style="max-width: 280px;">
+                            <em>Lessons:</em> {{ m.lessons_learned or 'None recorded' }}
+                        </small>
+                    </td>
+                    <td>
+                        {% if m.historical_trust_score %}
+                        <span class="badge {{ m.historical_trust_score | trust_badge }}">{{ m.historical_trust_score }}/100</span>
+                        {% else %}
+                        <span class="text-muted small">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge {{ m.test_result | status_badge }}">{{ m.test_result }}</span></td>
+                    <td>
+                        <span class="badge {{ m.implementation_outcome | status_badge }}">{{ m.implementation_outcome }}</span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('memory.memory_detail', memory_id=m.memory_id) }}" class="btn btn-sm btn-outline-primary" title="View Full Memory Record">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-brain fs-3 d-block mb-2"></i>
+                        No organizational memory records found matching filter.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

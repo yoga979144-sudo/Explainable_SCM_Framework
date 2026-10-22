@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Similarity Retrieval Diagnostic{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">TF-IDF Similarity Retrieval Diagnostic Tool</h3>
+        <p class="text-secondary small m-0">Live interactive testing of the organizational memory similarity engine using scikit-learn TF-IDF vectorization and cosine alignment.</p>
+    </div>
+    <a href="{{ url_for('memory.index') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Memory Repository
+    </a>
+</div>
+
+<!-- Search Query Form -->
+<div class="card mb-4 border-info">
+    <div class="card-header bg-info bg-opacity-10">
+        <span class="fw-bold text-dark"><i class="fa-solid fa-magnifying-glass-chart me-2 text-info"></i> Enter Proposed Change Specification to Test Retrieval</span>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('memory.similarity_test') }}">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label small fw-semibold text-muted">Proposed Change Description / Keywords *</label>
+                    <input type="text" name="query_text" class="form-control form-control-sm" placeholder="e.g. adjust trust score acceptance threshold from 70 to 80 for verification pipeline" value="{{ query_text or 'adjust trust score acceptance threshold from 70 to 80 for verification pipeline' }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted">CI Category</label>
+                    <select name="category" class="form-select form-select-sm">
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-calculator me-1"></i> Compute TF-IDF Cosine Similarity
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results Section -->
+{% if results is not none %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="fa-solid fa-list-ol me-2 text-primary"></i> Retrieved Institutional Precedents (Ranked by Alignment)</span>
+        <span class="badge bg-light text-dark border">{{ results | length }} Matches Computed</span>
+    </div>
+    <div class="card-body">
+        {% if results %}
+        <div class="row g-3">
+            {% for r in results %}
+            <div class="col-md-6">
+                <div class="card h-100 border-{% if r.memory.implementation_outcome == 'Success' %}success{% elif r.memory.implementation_outcome == 'Rollback' %}warning{% else %}danger{% endif %}">
+                    <div class="card-header d-flex justify-content-between align-items-center py-2 bg-light">
+                        <div>
+                            <span class="badge bg-dark me-1">{{ r.memory.memory_id }}</span>
+                            <span class="fw-semibold text-dark">{{ r.memory.change_type }}</span>
+                        </div>
+                        <span class="badge bg-primary fs-6">{{ r.similarity_score }}% Match</span>
+                    </div>
+                    <div class="card-body py-2">
+                        <p class="small text-dark mb-2">{{ r.memory.description }}</p>
+                        
+                        <div class="mb-2">
+                            <span class="badge {{ r.memory.implementation_outcome | status_badge }} me-1">{{ r.memory.implementation_outcome }}</span>
+                            <span class="badge {{ r.memory.test_result | status_badge }} me-1">Test: {{ r.memory.test_result }}</span>
+                            {% if r.memory.historical_trust_score %}
+                            <span class="badge {{ r.memory.historical_trust_score | trust_badge }}">Score: {{ r.memory.historical_trust_score }}/100</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="p-2 rounded bg-light border small">
+                            <strong>Match Reasons:</strong>
+                            <ul class="mb-0 ps-3">
+                                {% for reason in r.match_reasons %}
+                                <li>{{ reason }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        {% if r.memory.lessons_learned %}
+                        <div class="mt-2 small text-secondary">
+                            <em>Lesson:</em> {{ r.memory.lessons_learned }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+            <i class="fa-solid fa-ban fs-3 d-block mb-2"></i>
+            No records satisfied minimum similarity threshold.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

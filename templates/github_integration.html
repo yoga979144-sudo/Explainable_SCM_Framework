@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Git and GitHub SCM Tool Integration{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0 text-dark">SCM Tool Integration: Git & GitHub</h3>
+        <p class="text-secondary small m-0">Review 3 Feature Demonstration: Version Control, Issues, Pull Requests, and Actions CI/CD.</p>
+    </div>
+    <span class="badge bg-dark fs-6 px-3 py-2">
+        <i class="fa-brands fa-github me-1"></i> SCM Integration Hub
+    </span>
+</div>
+
+<!-- Integration Status & Credentials Configuration Banner -->
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-primary"><i class="fa-solid fa-plug me-2"></i> Connection Diagnostics & Remote Repository Settings</span>
+        <span class="badge bg-light text-secondary border">API Bridge</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-lg-7">
+                <div class="alert alert-light border small mb-3">
+                    <strong>Current Status:</strong> {{ overview.setting.status_message }}
+                </div>
+                <p class="small text-muted mb-0">
+                    <strong>Honest Academic Architecture:</strong> The application functions completely standalone without internet or GitHub credentials. Internal workflows simulate and represent Git commits, GitHub Issues, and Pull Requests with full mathematical explainability. When a valid Personal Access Token and public/private GitHub repository are configured, remote API synchronization is enabled.
+                </p>
+            </div>
+            <div class="col-lg-5 border-start">
+                <form method="POST" action="{{ url_for('scm.github_integration') }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Target GitHub Repository (owner/repo)</label>
+                        <input type="text" name="repo_name" class="form-control form-control-sm" placeholder="e.g. yogalakshmi-vit/Explainable-SCM-Framework" value="{{ overview.setting.repo_name or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">GitHub Personal Access Token (Optional)</label>
+                        <input type="password" name="api_token" class="form-control form-control-sm" placeholder="ghp_xxxxxxxxxxxx" value="{{ overview.setting.api_token or '' }}">
+                        <div class="form-text">Never committed to Git; stored securely in local database.</div>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                        <i class="fa-solid fa-cloud-arrow-up me-1"></i> Save & Test GitHub API Link
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4 Mandatory Review 3 Integrated SCM Features Matrix -->
+<div class="row g-3 mb-4">
+    {% for feat in overview.features %}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center bg-light py-2">
+                <span class="fw-bold text-dark">{{ feat.feature }}</span>
+                {% if feat.requires_credentials %}
+                <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">Optional Token</span>
+                {% else %}
+                <span class="badge bg-success" style="font-size: 0.7rem;">Active Locally</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="small text-secondary mb-2">{{ feat.description }}</p>
+                <div class="p-2 rounded bg-light border small">
+                    <strong>Operational Status:</strong> {{ feat.status }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- GitHub Issues Mapping Table -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="fa-solid fa-circle-dot me-2 text-danger"></i> Feature 2: GitHub Issues &harr; Change Request Mapping</span>
+        <span class="badge bg-light text-secondary border">{{ overview.mapped_issues | length }} Mapped Issues</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>Internal CR ID</th>
+                    <th>Associated GitHub Issue</th>
+                    <th>Issue Title</th>
+                    <th>Requester</th>
+                    <th>Mapping Class</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issue in overview.mapped_issues %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('change.cr_detail', cr_id=issue.internal_cr_id) }}" class="fw-bold text-decoration-none">
+                            {{ issue.internal_cr_id }}
+                        </a>
+                    </td>
+                    <td><span class="badge bg-dark font-monospace">{{ issue.github_issue_number }}</span></td>
+                    <td><span class="fw-medium text-dark">{{ issue.title }}</span></td>
+                    <td><small class="text-muted">{{ issue.requester }}</small></td>
+                    <td><small class="text-secondary">{{ issue.mapped_type }}</small></td>
+                    <td>
+                        <span class="badge {% if issue.status == 'Open' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ issue.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- GitHub Actions CI/CD Workflow Preview Card -->
+<div class="card">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+        <span class="small font-monospace"><i class="fa-brands fa-github me-2 text-primary"></i> Feature 4: .github/workflows/tests.yml (Automated CI Pipeline)</span>
+        <span class="badge bg-success">Configured & Ready</span>
+    </div>
+    <div class="card-body p-0">
+        <pre class="diff-container m-0"><code>name: SCM Framework Test Suite & Automated Audit Verification
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run Pytest Suite & Trust Verifications
+      run: |
+        pytest tests/ -v</code></pre>
+    </div>
+</div>
+{% endblock %}

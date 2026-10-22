@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}{{ cr.cr_id }} - {{ cr.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('change.index') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary fs-6">{{ cr.cr_id }}</span>
+                <h3 class="fw-bold m-0 text-dark">{{ cr.title }}</h3>
+            </div>
+            <p class="text-secondary small m-0">Target CI: <strong>{{ cr.affected_ci_id }}</strong> &bull; Requested by <strong>{{ cr.requester }}</strong> on {{ cr.creation_date.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge {{ cr.current_status | status_badge }} fs-6 px-3 py-2">{{ cr.current_status }}</span>
+        <a href="{{ url_for('trust.explainability_view', cr_id=cr.cr_id) }}" class="btn btn-sm btn-outline-success">
+            <i class="fa-solid fa-lightbulb me-1"></i> Explainability Panel
+        </a>
+    </div>
+</div>
+
+<!-- Primary Diagnostic Trust Overview Card -->
+{% if explanation %}
+<div class="card mb-4 border-{% if explanation.trust_score >= 80 %}success{% elif explanation.trust_score >= 60 %}warning{% else %}danger{% endif %} shadow-sm">
+    <div class="card-body">
+        <div class="row align-items-center g-3">
+            <div class="col-md-3 text-center border-end">
+                <div class="text-uppercase small fw-bold text-muted">Adaptive Trust Score</div>
+                <div class="display-5 fw-bold text-{% if explanation.trust_score >= 80 %}success{% elif explanation.trust_score >= 60 %}warning{% else %}danger{% endif %}">
+                    {{ explanation.trust_score }}<span class="fs-4 text-muted">/100</span>
+                </div>
+                <div class="mt-1">
+                    <span class="badge {% if explanation.evidence_confidence == 'High' %}bg-primary{% elif explanation.evidence_confidence == 'Medium' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                        Evidence Confidence: {{ explanation.evidence_confidence }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-6 border-end">
+                <h6 class="fw-bold mb-1"><i class="fa-solid fa-compass text-primary me-2"></i> Framework Recommendation:</h6>
+                <div class="p-2 rounded bg-light border fw-semibold small text-dark mb-2">
+                    {{ explanation.recommendation }}
+                </div>
+                <p class="text-secondary small m-0">
+                    <strong>Suggested Action:</strong> {{ explanation.suggested_next_step }}
+                </p>
+            </div>
+            <div class="col-md-3 text-center">
+                <form method="POST" action="{{ url_for('change.run_evaluation', cr_id=cr.cr_id) }}">
+                    <button type="submit" class="btn btn-outline-primary btn-sm mb-2 w-100">
+                        <i class="fa-solid fa-arrows-rotate me-1"></i> Re-Evaluate Trust
+                    </button>
+                </form>
+                <small class="text-muted d-block" style="font-size: 0.72rem;">
+                    Model Tag: {{ explanation.formula_breakdown.model_version }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+    <!-- Left Column: Details & Payloads -->
+    <div class="col-lg-7">
+        <!-- Change Request Details -->
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <span class="fw-bold"><i class="fa-solid fa-file-lines me-2 text-primary"></i> Specification & Reason for Change</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted text-uppercase">Reason for Change</label>
+                    <p class="mb-0 text-dark">{{ cr.reason_for_change }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted text-uppercase">Description</label>
+                    <p class="mb-0 text-secondary">{{ cr.description }}</p>
+                </div>
+                <div class="row g-2 pt-2 border-top">
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Risk Level</small>
+                        <span class="badge {% if cr.risk_level == 'Critical' %}bg-danger{% elif cr.risk_level == 'High' %}bg-warning text-dark{% else %}bg-light text-dark border{% endif %}">
+                            {{ cr.risk_level }}
+                        </span>
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Business Impact</small>
+                        <span class="badge bg-light text-dark border">{{ cr.business_impact }}</span>
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Developer</small>
+                        <span class="small fw-bold">{{ cr.assigned_developer or 'Unassigned' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proposed Configuration / Payload -->
+        <div class="card mb-3">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="fa-solid fa-code me-2 text-dark"></i> Proposed Configuration Payload</span>
+                <span class="badge bg-dark font-monospace">Proposed Value</span>
+            </div>
+            <div class="card-body p-0">
+                <pre class="diff-container m-0" style="max-height: 250px;"><code>{{ cr.proposed_value }}</code></pre>
+            </div>
+        </div>
+
+        <!-- CCB Review & Status Audit Trail -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <span class="fw-bold"><i class="fa-solid fa-timeline me-2 text-secondary"></i> SCM Transition Audit Trail</span>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush small">
+                    {% for h in cr.history %}
+                    <li class="list-group-item px-3 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary">{{ h.action_taken }}</span>
+                            <span class="text-muted">{{ h.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                        <div class="text-muted">By: <strong>{{ h.changed_by }}</strong> &bull; Status: <span class="badge {{ h.new_status | status_badge }}">{{ h.new_status }}</span></div>
+                        {% if h.comments %}
+                        <p class="mb-0 text-secondary fst-italic mt-1">"{{ h.comments }}"</p>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Interactive Lifecycle Governance Actions -->
+    <div class="col-lg-5">
+        <!-- 1. CCB Review Gate -->
+        <div class="card mb-3 border-warning">
+            <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="fa-solid fa-gavel me-2 text-warning"></i> Gate 1: CCB Review & Approval</span>
+                {% if cr.final_decision %}
+                <span class="badge {% if cr.final_decision == 'Approved' %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ cr.final_decision }}
+                </span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Pending CCB</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if cr.final_decision %}
+                <div class="alert alert-light border small mb-0">
+                    <strong>Decision:</strong> {{ cr.final_decision }}<br>
+                    <strong>Reviewer Comments:</strong> {{ cr.reviewer_comments or 'No comments provided.' }}
+                </div>
+                {% else %}
+                <form method="POST" action="{{ url_for('change.submit_ccb_review', cr_id=cr.cr_id) }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Review Decision *</label>
+                        <select name="decision" class="form-select form-select-sm" required>
+                            <option value="Approved">Approve Change Request</option>
+                            <option value="Rejected">Reject Change Request</option>
+                            <option value="Modification Requested">Request Modification (Draft)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Reviewer Notes / Rationalization *</label>
+                        <textarea name="comments" rows="2" class="form-control form-control-sm" placeholder="Provide formal CCB justification..." required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-warning text-dark btn-sm fw-semibold">
+                            <i class="fa-solid fa-stamp me-1"></i> Submit CCB Ruling
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 2. Implementation Gate -->
+        <div class="card mb-3 border-info">
+            <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="fa-solid fa-code-commit me-2 text-info"></i> Gate 2: Implementation & Versioning</span>
+                {% if cr.current_status in ['Implemented', 'Tested', 'Closed'] %}
+                <span class="badge bg-purple">Implemented</span>
+                {% else %}
+                <span class="badge bg-secondary">Awaiting Approval</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if cr.current_status in ['Implemented', 'Tested', 'Closed'] %}
+                <div class="alert alert-light border small mb-0">
+                    <i class="fa-solid fa-check text-success me-1"></i> Change implemented. Baseline configuration updated.
+                </div>
+                {% elif cr.current_status == 'Approved' %}
+                <form method="POST" action="{{ url_for('change.implement_cr', cr_id=cr.cr_id) }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">New CI Target Version *</label>
+                        <input type="text" name="new_version_number" class="form-control form-control-sm" placeholder="e.g. 1.1 or 2.0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Implementation Commit Message</label>
+                        <input type="text" name="commit_message" class="form-control form-control-sm" value="Applied approved changes for {{ cr.cr_id }}">
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-purple btn-sm text-white fw-semibold">
+                            <i class="fa-solid fa-code-branch me-1"></i> Implement & Create Version
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <p class="text-muted small fst-italic mb-0">Implementation requires CCB approval first.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 3. Verification & Test Gate -->
+        <div class="card mb-3 border-teal">
+            <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="fa-solid fa-vial-circle-check me-2 text-success"></i> Gate 3: Test Verification</span>
+                {% if cr.current_status in ['Tested', 'Closed'] %}
+                <span class="badge bg-teal">Verified</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if cr.test_results.count() > 0 %}
+                <div class="list-group list-group-flush small">
+                    {% for tr in cr.test_results %}
+                    <div class="py-1">
+                        <strong>{{ tr.test_suite_name }}</strong>: <span class="badge {{ tr.test_status | status_badge }}">{{ tr.test_status }}</span>
+                        <div class="text-muted">{{ tr.passed_tests }} Passed, {{ tr.failed_tests }} Failed (by {{ tr.executed_by }})</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if cr.current_status == 'Implemented' or (cr.current_status == 'Tested' and cr.test_results.count() == 0) %}
+                <form method="POST" action="{{ url_for('change.submit_test_result', cr_id=cr.cr_id) }}" class="mt-2">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Test Suite Name *</label>
+                        <input type="text" name="test_suite_name" class="form-control form-control-sm" value="Automated Verification Suite (Pytest)" required>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Passed Tests</label>
+                            <input type="number" name="passed_tests" class="form-control form-control-sm" value="25" min="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Failed Tests</label>
+                            <input type="number" name="failed_tests" class="form-control form-control-sm" value="0" min="0">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Outcome</label>
+                        <select name="test_status" class="form-select form-select-sm">
+                            <option value="Passed">Passed (100% test assertions satisfied)</option>
+                            <option value="Failed">Failed (Regressions detected)</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Verification Evidence</label>
+                        <input type="text" name="test_evidence" class="form-control form-control-sm" placeholder="e.g. Pytest log hash 8f4b12">
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-teal btn-sm text-white fw-semibold">
+                            <i class="fa-solid fa-check-double me-1"></i> Record Test Result
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 4. Close & Organizational Memory Archive Gate -->
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="fa-solid fa-box-archive me-2 text-primary"></i> Gate 4: Memory Archival</span>
+                {% if cr.current_status == 'Closed' %}
+                <span class="badge bg-dark">Archived</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending Closure</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if cr.current_status == 'Closed' %}
+                <div class="alert alert-success small mb-0">
+                    <i class="fa-solid fa-circle-check me-1"></i> Change completed and archived into Organizational Memory.
+                </div>
+                {% elif cr.current_status == 'Tested' or (cr.current_status == 'Implemented') %}
+                <form method="POST" action="{{ url_for('change.close_cr', cr_id=cr.cr_id) }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Final Implementation Outcome *</label>
+                        <select name="implementation_outcome" class="form-select form-select-sm" required>
+                            <option value="Success">Success (Zero defect introduction)</option>
+                            <option value="Rollback">Rollback (Reverted due to runtime incompatibility)</option>
+                            <option value="Failure">Failure (Defect reported in staging)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Lessons Learned / Post-Mortem *</label>
+                        <textarea name="lessons_learned" rows="2" class="form-control form-control-sm" placeholder="What should future trust evaluations know about this change?" required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary btn-sm fw-semibold">
+                            <i class="fa-solid fa-brain me-1"></i> Close & Store in Org Memory
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <p class="text-muted small fst-italic mb-0">Change must pass implementation and testing before memory archival.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
